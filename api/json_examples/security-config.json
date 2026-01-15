@@ -1,0 +1,1 @@
+{"enforceApiKey": false,"enforceDeviceIdValidation": false,"rateLimitRequests": 100,"enforceHttps": true,"logAllRequests": true}

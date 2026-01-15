@@ -1,0 +1,19 @@
+{
+  "version": "1.0",
+  "mappings": [
+    {
+      "tenantId": "justcook",
+      "displayName": "JustCook",
+      "configPath": "justcook_tenant"
+    },
+    {
+      "tenantId": "almaro",
+      "displayName": "Almaro",
+      "configPath": "almaro_tenant"
+    }
+  ],
+  "default": {
+    "tenantId": "default",
+    "configPath": "default"
+  }
+}

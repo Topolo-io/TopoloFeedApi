@@ -1,0 +1,47 @@
+{
+  "version": "1.0",
+  "baseConfig": {
+    "defaultDuration": 15,
+    "transitionEffect": "fade",
+    "transitionDuration": 1.0,
+    "refreshInterval": 3600,
+    "displayMode": "fullscreen",
+    "aspectRatio": "fill",
+    "backgroundColor": "#000000",
+    "enableCaching": true,
+    "fallbackImage": "https://dev.r2.nodo.topolo.app/image0%20(1).png"
+  },
+  "baseMedia": [
+    {
+      "id": "base-001",
+      "type": "image",
+      "url": "https://dev.r2.nodo.topolo.app/IMG_1188.jpg",
+      "duration": 10,
+      "priority": 10,
+      "tags": ["welcome", "base"]
+    }
+  ],
+  "contentCategories": {
+    "ads": {
+      "description": "Third-party advertisements",
+      "defaultEnabled": false,
+      "contentPath": "advertisements",
+      "refreshInterval": 1800
+    },
+    "promotions": {
+      "description": "Promotional content",
+      "defaultEnabled": true,
+      "contentPath": "promotions",
+      "refreshInterval": 3600
+    },
+    "seasonal": {
+      "description": "Seasonal content",
+      "defaultEnabled": true,
+      "contentPath": "seasonal",
+      "refreshInterval": 86400
+    }
+  },
+  "tenantMapping": {
+    "tenant-lookup-path": "tenant-mapping"
+  }
+}

@@ -1,0 +1,35 @@
+{
+    "version": "1.0",
+    "categoryId": "ads",
+    "lastUpdated": "2023-11-24T12:00:00Z",
+    "validUntil": "2023-12-31T23:59:59Z",
+    "media": [
+      {
+        "id": "ad-001",
+        "type": "video",
+        "url": "https://dev.r2.nodo.topolo.app/Web%20Video%20f2.mp4",
+        "duration": 30,
+        "priority": 5,
+        "advertiser": "Topolo",
+        "tags": ["technology", "premium"],
+        "schedule": {
+          "startDate": "2023-11-01",
+          "endDate": "2025-12-15"
+        }
+      },
+      {
+        "id": "ad-002",
+        "type": "image",
+        "url": "https://dev.r2.nodo.topolo.app/8eight.jpg",
+        "duration": 15,
+        "priority": 3,
+        "advertiser": "Livefreshr",
+        "tags": ["catering", "seasonal"]
+      }
+    ],
+    "adGroups": {
+      "premium": ["ad-001"],
+      "retail": ["ad-002"],
+      "all": ["ad-001", "ad-002"]
+    }
+  }

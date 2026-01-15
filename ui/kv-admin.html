@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nodo Feed API - KV Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.10.0/jsoneditor.min.css" rel="stylesheet">
+    <style>
+        body {
+            overflow-x: hidden;
+        }
+        .jsoneditor {
+            height: 600px;
+        }
+        .save-btn {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid mt-4 mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Nodo Feed API - KV Admin</h1>
+            <a href="index.html" class="btn btn-outline-primary">Return to Feed Explorer</a>
+        </div>
+        
+        <div class="alert alert-info">
+            <h4 class="alert-heading">Important Note:</h4>
+            <p>This interface requires proper API endpoints to view and edit your KV namespace data. Below are mockups that simulate what this would look like if integrated with a KV admin API.</p>
+            <p>To implement the actual functionality, you would need to:</p>
+            <ol>
+                <li>Create additional Worker endpoints to list, get, and update KV values</li>
+                <li>Add authentication to these endpoints (very important!)</li>
+                <li>Update this page to use those actual endpoints</li>
+            </ol>
+        </div>
+        
+        <!-- KV Namespace Selection -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        KV Namespace: NODO_FEED_CONFIG
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group mb-3">
+                            <label for="feedConfigKey" class="form-label">Select Configuration:</label>
+                            <select class="form-select" id="feedConfigKey">
+                                <option value="" selected disabled>Choose a configuration</option>
+                                <option value="tenant-mapping">tenant-mapping</option>
+                                <option value="feed">feed</option>
+                                <option value="justcook_tenant">justcook_tenant</option>
+                                <option value="almaro_tenant">almaro_tenant</option>
+                                <option value="default">default</option>
+                                <option value="advertisements">advertisements</option>
+                                <option value="promotions">promotions</option>
+                                <option value="seasonal">seasonal</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary w-100" id="loadFeedConfigBtn">Load Configuration</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        KV Namespace: NODO_STATE
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group mb-3">
+                            <label for="stateKey" class="form-label">Select Device List:</label>
+                            <select class="form-select" id="stateKey">
+                                <option value="" selected disabled>Choose a device list</option>
+                                <option value="justcook:tenant:deviceList">justcook:tenant:deviceList</option>
+                                <option value="almaro:tenant:deviceList">almaro:tenant:deviceList</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary w-100" id="loadStateBtn">Load Device List</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Editor Container -->
+        <div class="card">
+            <div class="card-header position-relative">
+                <span id="editorTitle">Select a configuration to edit</span>
+                <button id="saveBtn" class="btn btn-success save-btn" disabled>Save Changes</button>
+            </div>
+            <div class="card-body">
+                <div id="jsonEditor"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modals -->
+    <div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center py-4">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <h5 class="modal-title" id="loadingTitle">Loading</h5>
+                    <p class="text-muted" id="loadingMessage">Please wait...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="resultModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="resultTitle">Result</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="resultMessage">
+                    Operation completed.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsoneditor/9.10.0/jsoneditor.min.js"></script>
+    <script>
+        // DOM Elements
+        const feedConfigKeySelect = document.getElementById('feedConfigKey');
+        const stateKeySelect = document.getElementById('stateKey');
+        const loadFeedConfigBtn = document.getElementById('loadFeedConfigBtn');
+        const loadStateBtn = document.getElementById('loadStateBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const editorTitle = document.getElementById('editorTitle');
+        const jsonEditorContainer = document.getElementById('jsonEditor');
+        
+        // Bootstrap modals
+        const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+        const resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
+        
+        // JSON Editor
+        let jsonEditor;
+        let currentNamespace = null;
+        let currentKey = null;
+        
+        // Sample data (in a real implementation, this would come from your API)
+        const mockData = {
+            'NODO_FEED_CONFIG': {
+                'tenant-mapping': {
+                    "version": "1.0",
+                    "mappings": [
+                        {
+                            "tenantId": "justcook",
+                            "displayName": "JustCook",
+                            "configPath": "justcook_tenant"
+                        },
+                        {
+                            "tenantId": "almaro",
+                            "displayName": "Almaro",
+                            "configPath": "almaro_tenant"
+                        }
+                    ],
+                    "default": {
+                        "tenantId": "default",
+                        "configPath": "default"
+                    }
+                },
+                'feed': {
+                    "version": "1.0",
+                    "baseConfig": {
+                        "defaultDuration": 15,
+                        "transitionEffect": "fade",
+                        "transitionDuration": 1.0,
+                        "refreshInterval": 3600,
+                        "displayMode": "fullscreen",
+                        "aspectRatio": "fill",
+                        "backgroundColor": "#000000",
+                        "enableCaching": true,
+                        "fallbackImage": "https://example.com/fallback.jpg"
+                    },
+                    "baseMedia": [
+                        {
+                            "id": "base-001",
+                            "type": "image",
+                            "url": "https://example.com/welcome.jpg",
+                            "duration": 10,
+                            "priority": 10,
+                            "tags": ["welcome", "base"]
+                        }
+                    ],
+                    "contentCategories": {
+                        "ads": {
+                            "description": "Third-party advertisements",
+                            "defaultEnabled": false,
+                            "contentPath": "advertisements",
+                            "refreshInterval": 1800
+                        },
+                        "promotions": {
+                            "description": "Promotional content",
+                            "defaultEnabled": true,
+                            "contentPath": "promotions",
+                            "refreshInterval": 3600
+                        }
+                    },
+                    "tenantMapping": {
+                        "tenant-lookup-path": "tenant-mapping"
+                    }
+                },
+                'justcook_tenant': {
+                    "config": {
+                        "defaultDuration": 15,
+                        "refreshInterval": 600
+                    },
+                    "media": [
+                        {
+                            "id": "jc-001",
+                            "type": "image",
+                            "url": "https://example.com/justcook1.jpg",
+                            "duration": 15
+                        },
+                        {
+                            "id": "jc-002",
+                            "type": "video",
+                            "url": "https://example.com/justcook_promo.mp4",
+                            "duration": 30
+                        }
+                    ],
+                    "mediaOptions": {
+                        "includeBaseMedia": true
+                    },
+                    "contentCategorySettings": {
+                        "ads": {
+                            "enabled": true,
+                            "includedGroups": ["premium", "food"],
+                            "excludedTags": ["alcohol", "tobacco"]
+                        },
+                        "promotions": {
+                            "enabled": true
+                        }
+                    }
+                }
+            },
+            'NODO_STATE': {
+                'justcook:tenant:deviceList': [
+                    "121c87b2ad1e2c50",
+                    "67e4809f05e674ec",
+                    "device-3"
+                ],
+                'almaro:tenant:deviceList': [
+                    "almaro-device-1",
+                    "almaro-device-2"
+                ]
+            }
+        };
+        
+        // Initialize JSON Editor
+        document.addEventListener('DOMContentLoaded', function() {
+            const options = {
+                mode: 'tree',
+                modes: ['tree', 'code', 'form', 'text', 'view'],
+                onChangeJSON: function() {
+                    saveBtn.disabled = false;
+                }
+            };
+            
+            jsonEditor = new JSONEditor(jsonEditorContainer, options);
+            jsonEditor.set({message: 'Select a configuration to edit'});
+        });
+        
+        // Event Listeners
+        loadFeedConfigBtn.addEventListener('click', function() {
+            const key = feedConfigKeySelect.value;
+            if (!key) {
+                alert('Please select a configuration');
+                return;
+            }
+            
+            loadData('NODO_FEED_CONFIG', key);
+        });
+        
+        loadStateBtn.addEventListener('click', function() {
+            const key = stateKeySelect.value;
+            if (!key) {
+                alert('Please select a device list');
+                return;
+            }
+            
+            loadData('NODO_STATE', key);
+        });
+        
+        saveBtn.addEventListener('click', function() {
+            saveData();
+        });
+        
+        // Functions
+        async function loadData(namespace, key) {
+            showLoading(`Loading ${key} from ${namespace}`);
+            
+            try {
+                // In a real implementation, this would be a fetch() to your KV admin API
+                // For this demo, we'll use the mock data
+                setTimeout(() => {
+                    const data = mockData[namespace][key];
+                    if (data) {
+                        jsonEditor.set(data);
+                        editorTitle.textContent = `Editing: ${namespace} / ${key}`;
+                        currentNamespace = namespace;
+                        currentKey = key;
+                        saveBtn.disabled = true;
+                    } else {
+                        showResult('Error', `No data found for ${key} in ${namespace}`);
+                    }
+                    hideLoading();
+                }, 800); // Simulate network delay
+            } catch (error) {
+                hideLoading();
+                showResult('Error', error.message);
+            }
+        }
+        
+        async function saveData() {
+            if (!currentNamespace || !currentKey) {
+                showResult('Error', 'No configuration selected for saving');
+                return;
+            }
+            
+            try {
+                const json = jsonEditor.get();
+                
+                showLoading(`Saving ${currentKey} to ${currentNamespace}`);
+                
+                // In a real implementation, this would be a fetch() to your KV admin API
+                // For this demo, we'll simulate a successful save
+                setTimeout(() => {
+                    // Simulate updating the mock data
+                    mockData[currentNamespace][currentKey] = json;
+                    
+                    hideLoading();
+                    showResult('Success', `Saved ${currentKey} to ${currentNamespace} successfully`);
+                    saveBtn.disabled = true;
+                }, 800); // Simulate network delay
+                
+            } catch (error) {
+                hideLoading();
+                showResult('Error', `Failed to save: ${error.message}`);
+            }
+        }
+        
+        function showLoading(message) {
+            document.getElementById('loadingMessage').textContent = message || 'Please wait...';
+            loadingModal.show();
+        }
+        
+        function hideLoading() {
+            loadingModal.hide();
+        }
+        
+        function showResult(title, message) {
+            document.getElementById('resultTitle').textContent = title;
+            document.getElementById('resultMessage').textContent = message;
+            resultModal.show();
+        }
+    </script>
+</body>
+</html> 

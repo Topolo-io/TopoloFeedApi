@@ -1,0 +1,46 @@
+{
+    "version": "1.0",
+    "tenantId": "justcook",
+    "config": {
+      "defaultDuration": 20,
+      "backgroundColor": "#0a2f5c",
+      "logo": "https://dev.r2.nodo.topolo.app/250x250.jpg",
+      "showLogo": true
+    },
+    "media": [
+      {
+        "id": "justcook-001",
+        "type": "image",
+        "url": "https://dev.r2.nodo.topolo.app/17.jpg",
+        "duration": 15,
+        "priority": 1,
+        "tags": ["product", "justcook"]
+      }
+    ],
+    "contentCategorySettings": {
+      "ads": {
+        "enabled": true,
+        "frequency": "medium",
+        "weight": 20,
+        "includedGroups": ["premium", "retail"],
+        "excludedTags": ["adult", "gambling"]
+      },
+      "promotions": {
+        "enabled": true,
+        "frequency": "high",
+        "weight": 30
+      },
+      "seasonal": {
+        "enabled": false
+      }
+    },
+    "mediaOptions": {
+      "includeBaseMedia": true,
+      "basePriorityOffset": 5,
+      "mediaRatio": {
+        "tenant": 50,
+        "base": 30,
+        "categories": 20
+      }
+    }
+  }

@@ -1,0 +1,8 @@
+{
+  "name": "nodo-feed-ui",
+  "version": "1.0.0",
+  "description": "UI for testing the Nodo Feed API",
+  "scripts": {
+    "build": "mkdir -p dist && cp -r *.html *.css js dist/"
+  }
+} 

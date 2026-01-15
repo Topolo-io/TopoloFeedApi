@@ -1,0 +1,13 @@
+name = "nodo-feed-api" # Replace with your worker's name
+main = "src/index.ts"
+compatibility_date = "2025-01-05" # Adjust as needed
+compatibility_flags = ["nodejs_compat"]
+
+# Bind the KV namespace. Replace "YOUR_KV_NAMESPACE_ID_HERE" with the actual ID from your Cloudflare dashboard.
+[[kv_namespaces]]
+binding = "NODO_FEED_CONFIG"
+id = "6a325c245ac0433696b3a127a8da3ee8"
+
+[[kv_namespaces]]
+binding = "NODO_STATE"
+id = "37a037b342994ab5b722b12746d7cbd7" 
