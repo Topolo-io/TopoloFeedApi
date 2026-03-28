@@ -56,6 +56,18 @@ interface TenantConfig {
   }>;
 }
 
+interface DeviceFeedAssignment {
+  deviceId: string;
+  tenantId?: string;
+  mode?: string;
+  kind?: 'current_feed' | 'tenant_feed' | 'manual_playlist';
+  label?: string | null;
+  sourceDeviceId?: string | null;
+  playlistName?: string | null;
+  updatedAt?: string | null;
+  updatedBy?: string | null;
+}
+
 // App
 const app = new Hono<{ Bindings: Env }>();
 
@@ -131,7 +143,7 @@ async function compileFeed(env: Env, deviceId: string): Promise<MediaItem[]> {
   const defaultDuration = baseConfig.defaultDuration;
   
   // Find tenant config for this device
-  const tenantConfigKey = await findTenantConfig(env, deviceId, tenantMapping);
+  const tenantConfigKey = await resolveFeedConfigPath(env, deviceId, tenantMapping);
   let tenantConfig: TenantConfig = {};
   
   if (tenantConfigKey) {
@@ -209,8 +221,16 @@ async function compileFeed(env: Env, deviceId: string): Promise<MediaItem[]> {
 async function findTenantConfig(
   env: Env, 
   deviceId: string, 
-  mapping: TenantMapping
+  mapping: TenantMapping,
+  tenantIdHint?: string | null,
 ): Promise<string | null> {
+  if (tenantIdHint) {
+    const directConfig = mapping.mappings?.find((entry) => entry.tenantId === tenantIdHint)?.configPath;
+    if (directConfig) {
+      return directConfig;
+    }
+  }
+
   if (!mapping.mappings?.length) {
     return mapping.default?.configPath || null;
   }
@@ -229,6 +249,63 @@ async function findTenantConfig(
   }
   
   return mapping.default?.configPath || null;
+}
+
+async function resolveFeedConfigPath(
+  env: Env,
+  deviceId: string,
+  mapping: TenantMapping,
+  visitedDeviceIds = new Set<string>(),
+): Promise<string | null> {
+  if (visitedDeviceIds.has(deviceId)) {
+    throw new Error(`Feed assignment loop detected for device ${deviceId}`);
+  }
+
+  visitedDeviceIds.add(deviceId);
+
+  const assignment = await readDeviceFeedAssignment(env, deviceId);
+
+  if (assignment?.kind === 'manual_playlist') {
+    return resolveManualPlaylistConfigPath(env, assignment.playlistName);
+  }
+
+  if (assignment?.kind === 'current_feed' && assignment.sourceDeviceId && assignment.sourceDeviceId !== deviceId) {
+    return resolveFeedConfigPath(env, assignment.sourceDeviceId, mapping, visitedDeviceIds);
+  }
+
+  return findTenantConfig(env, deviceId, mapping, assignment?.tenantId || null);
+}
+
+async function resolveManualPlaylistConfigPath(env: Env, playlistName?: string | null): Promise<string> {
+  const normalizedName = typeof playlistName === 'string' ? playlistName.trim() : '';
+  if (!normalizedName) {
+    throw new Error('Manual playlist key is missing');
+  }
+
+  const candidateKeys = Array.from(new Set([normalizedName, `playlist:${normalizedName}`]));
+
+  for (const key of candidateKeys) {
+    const configValue = await env.NODO_FEED_CONFIG.get(key);
+    if (configValue) {
+      return key;
+    }
+  }
+
+  throw new Error(`Manual playlist '${normalizedName}' was not found`);
+}
+
+async function readDeviceFeedAssignment(env: Env, deviceId: string): Promise<DeviceFeedAssignment | null> {
+  const rawValue = await env.NODO_STATE.get(`deviceFeedAssignment:${deviceId}`);
+  if (!rawValue) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawValue) as DeviceFeedAssignment;
+  } catch (error) {
+    console.warn(`Skipping invalid device feed assignment for ${deviceId}:`, error);
+    return null;
+  }
 }
 
 // Transform and validate media item
