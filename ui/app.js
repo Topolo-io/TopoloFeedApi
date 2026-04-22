@@ -300,7 +300,7 @@ async function fetchKV(key, outputElement) {
         // Show loading
         showLoading(`Fetching KV data: ${key}`);
         
-        const response = await fetchWithRetry(`${apiEndpoint}/admin/kv/NODO_FEED_CONFIG/${key}`, {
+        const response = await fetchWithRetry(`${apiEndpoint}/admin/kv/TOPOLO_FEED_CONFIG/${key}`, {
             method: 'GET',
             mode: 'cors',
             headers: {
@@ -370,7 +370,7 @@ async function fetchKV(key, outputElement) {
     } catch (error) {
         // Make sure loading is hidden
         hideLoading();
-        outputElement.textContent = `Error: ${error.message}\n\nMake sure your API has the admin endpoints enabled.\nThe URL format should be:\n${apiEndpointInput.value.trim()}/admin/kv/NODO_FEED_CONFIG/${key}`;
+        outputElement.textContent = `Error: ${error.message}\n\nMake sure your API has the admin endpoints enabled.\nThe URL format should be:\n${apiEndpointInput.value.trim()}/admin/kv/TOPOLO_FEED_CONFIG/${key}`;
     }
 }
 

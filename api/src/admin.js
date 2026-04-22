@@ -68,7 +68,7 @@ export async function handleAdminRequest(request, env) {
                 JSON.stringify({ 
                     api: 'Nodo Feed API',
                     version: '1.0',
-                    kv_namespaces: ['NODO_FEED_CONFIG', 'NODO_STATE'],
+                    kv_namespaces: ['TOPOLO_FEED_CONFIG', 'TOPOLO_STATE'],
                     environment: env.ENVIRONMENT || 'production'
                 }),
                 { 
@@ -113,7 +113,7 @@ async function handleDeviceStatsRequest(deviceId, env) {
         if (deviceId) {
             // Get stats for a specific device
             const statsKey = `device:${deviceId}:stats`;
-            const stats = await env.NODO_STATE.get(statsKey, 'json');
+            const stats = await env.TOPOLO_STATE.get(statsKey, 'json');
             
             if (stats === null) {
                 return new Response(
@@ -139,7 +139,7 @@ async function handleDeviceStatsRequest(deviceId, env) {
         } else {
             // List all device stats keys (just the keys, not the values)
             // This is efficient even with many devices
-            const deviceStatsKeys = await env.NODO_STATE.list({ prefix: 'device:' });
+            const deviceStatsKeys = await env.TOPOLO_STATE.list({ prefix: 'device:' });
             
             // Extract just the device IDs from the keys
             const deviceIds = deviceStatsKeys.keys.map(key => {
@@ -190,11 +190,11 @@ async function handleKVRequest(namespaceName, key, env) {
     // Get the actual KV namespace
     let namespace;
     switch (namespaceName) {
-        case 'NODO_FEED_CONFIG':
-            namespace = env.NODO_FEED_CONFIG;
+        case 'TOPOLO_FEED_CONFIG':
+            namespace = env.TOPOLO_FEED_CONFIG;
             break;
-        case 'NODO_STATE':
-            namespace = env.NODO_STATE;
+        case 'TOPOLO_STATE':
+            namespace = env.TOPOLO_STATE;
             break;
         default:
             console.warn(`Requested unknown KV namespace: ${namespaceName}`);

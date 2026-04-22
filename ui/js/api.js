@@ -124,7 +124,7 @@ async function fetchKV(key, apiEndpoint) {
     try {
         showLoading(`Fetching KV data: ${key}`);
         
-        const response = await fetchWithRetry(`${apiEndpoint}/admin/kv/NODO_FEED_CONFIG/${key}`, {
+        const response = await fetchWithRetry(`${apiEndpoint}/admin/kv/TOPOLO_FEED_CONFIG/${key}`, {
             method: 'GET',
             mode: 'cors',
             headers: {

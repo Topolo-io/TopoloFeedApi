@@ -6,8 +6,8 @@ import { z } from 'zod';
 
 // Types
 interface Env {
-  NODO_FEED_CONFIG: KVNamespace;
-  NODO_STATE: KVNamespace;
+  TOPOLO_FEED_CONFIG: KVNamespace;
+  TOPOLO_STATE: KVNamespace;
 }
 
 interface MediaItem {
@@ -136,8 +136,8 @@ app.get('/:deviceId', async (c) => {
 // Feed compilation
 async function compileFeed(env: Env, deviceId: string): Promise<MediaItem[]> {
   // Load tenant mapping
-  const tenantMapping = await getKV<TenantMapping>(env.NODO_FEED_CONFIG, 'tenant-mapping');
-  const baseFeedConfig = await getKV<FeedConfig>(env.NODO_FEED_CONFIG, 'feed');
+  const tenantMapping = await getKV<TenantMapping>(env.TOPOLO_FEED_CONFIG, 'tenant-mapping');
+  const baseFeedConfig = await getKV<FeedConfig>(env.TOPOLO_FEED_CONFIG, 'feed');
   
   const baseConfig = baseFeedConfig.baseConfig || { defaultDuration: 15 };
   const defaultDuration = baseConfig.defaultDuration;
@@ -148,7 +148,7 @@ async function compileFeed(env: Env, deviceId: string): Promise<MediaItem[]> {
   
   if (tenantConfigKey) {
     try {
-      tenantConfig = await getKV<TenantConfig>(env.NODO_FEED_CONFIG, tenantConfigKey);
+      tenantConfig = await getKV<TenantConfig>(env.TOPOLO_FEED_CONFIG, tenantConfigKey);
     } catch (e) {
       console.warn(`Could not load tenant config: ${tenantConfigKey}`);
     }
@@ -182,7 +182,7 @@ async function compileFeed(env: Env, deviceId: string): Promise<MediaItem[]> {
       if (settings?.enabled && categoryDef.contentPath) {
         try {
           const categoryContent = await getKV<{ media?: MediaItem[]; adGroups?: Record<string, string[]> }>(
-            env.NODO_FEED_CONFIG, 
+            env.TOPOLO_FEED_CONFIG, 
             categoryDef.contentPath
           );
           
@@ -239,7 +239,7 @@ async function findTenantConfig(
     const deviceListKey = `${tenantId}:tenant:deviceList`;
     
     try {
-      const deviceList = await getKV<string[]>(env.NODO_STATE, deviceListKey);
+      const deviceList = await getKV<string[]>(env.TOPOLO_STATE, deviceListKey);
       if (deviceList.includes(deviceId)) {
         return configPath;
       }
@@ -285,7 +285,7 @@ async function resolveManualPlaylistConfigPath(env: Env, playlistName?: string |
   const candidateKeys = Array.from(new Set([normalizedName, `playlist:${normalizedName}`]));
 
   for (const key of candidateKeys) {
-    const configValue = await env.NODO_FEED_CONFIG.get(key);
+    const configValue = await env.TOPOLO_FEED_CONFIG.get(key);
     if (configValue) {
       return key;
     }
@@ -295,7 +295,7 @@ async function resolveManualPlaylistConfigPath(env: Env, playlistName?: string |
 }
 
 async function readDeviceFeedAssignment(env: Env, deviceId: string): Promise<DeviceFeedAssignment | null> {
-  const rawValue = await env.NODO_STATE.get(`deviceFeedAssignment:${deviceId}`);
+  const rawValue = await env.TOPOLO_STATE.get(`deviceFeedAssignment:${deviceId}`);
   if (!rawValue) {
     return null;
   }

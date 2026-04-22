@@ -168,7 +168,7 @@ async function validateApiKey(request, securityConfig, env) {
   try {
     // Here we would check if the API key is valid
     // This example uses a simple check against KV store
-    const validKey = await env.NODO_STATE.get(`apikey:${apiKey}`);
+    const validKey = await env.TOPOLO_STATE.get(`apikey:${apiKey}`);
     return { 
       valid: validKey !== null, 
       reason: validKey !== null ? 'Valid API key' : 'Invalid API key' 
@@ -193,7 +193,7 @@ async function validateDeviceId(deviceId, securityConfig, env) {
   try {
     // Here we would check if the device ID is registered
     // This example uses a simple check against KV store
-    const validDevice = await env.NODO_STATE.get(`device:${deviceId}`);
+    const validDevice = await env.TOPOLO_STATE.get(`device:${deviceId}`);
     return { 
       valid: validDevice !== null, 
       reason: validDevice !== null ? 'Valid device ID' : 'Unregistered device ID' 
@@ -252,7 +252,7 @@ async function logRequest(request, deviceId, securityInfo, env, wasSuccess = tru
     // Try to get existing stats
     let stats = null;
     try {
-      stats = await env.NODO_STATE.get(deviceKey, 'json');
+      stats = await env.TOPOLO_STATE.get(deviceKey, 'json');
     } catch (error) {
       // If there's an error or no existing stats, create a new object
       console.warn(`Could not fetch existing stats for ${deviceId}: ${error?.message}`);
@@ -314,7 +314,7 @@ async function logRequest(request, deviceId, securityInfo, env, wasSuccess = tru
     };
     
     // Store updated stats with a 90-day TTL (7776000 seconds)
-    await env.NODO_STATE.put(deviceKey, JSON.stringify(stats), { expirationTtl: 7776000 });
+    await env.TOPOLO_STATE.put(deviceKey, JSON.stringify(stats), { expirationTtl: 7776000 });
   } catch (error) {
     console.error('Error logging request:', error);
     // Non-critical operation, so just log the error and continue
@@ -324,7 +324,7 @@ async function logRequest(request, deviceId, securityInfo, env, wasSuccess = tru
 // Helper function to get security configuration
 async function getSecurityConfig(env) {
   try {
-    const securityConfig = await fetchFromKV(env.NODO_FEED_CONFIG, SECURITY_CONFIG_KEY, "json");
+    const securityConfig = await fetchFromKV(env.TOPOLO_FEED_CONFIG, SECURITY_CONFIG_KEY, "json");
     return { ...DEFAULT_SECURITY_CONFIG, ...securityConfig };
   } catch (error) {
     console.warn('Could not load security config, using defaults:', error);
@@ -494,7 +494,7 @@ async function router(request, env, securityConfig, rateLimitCheck) {
 
 // Main handler for feed API requests
 async function handleRequest(request, env, securityConfig, rateLimitCheck) {
-  console.log('In handleRequest. KV bindings available:', typeof env.NODO_FEED_CONFIG, typeof env.NODO_STATE);
+  console.log('In handleRequest. KV bindings available:', typeof env.TOPOLO_FEED_CONFIG, typeof env.TOPOLO_STATE);
   const url = new URL(request.url);
 
   try {
@@ -645,7 +645,7 @@ async function getTenantConfigPath(deviceId, tenantMapping, env) {
         if (mapping.tenantId && mapping.configPath) {
             const deviceListKey = `${mapping.tenantId}:tenant:deviceList`;
             try {
-                const deviceList = await fetchFromKV(env.NODO_STATE, deviceListKey, "json");
+                const deviceList = await fetchFromKV(env.TOPOLO_STATE, deviceListKey, "json");
                 
                 if (Array.isArray(deviceList) && deviceList.includes(deviceId)) {
                     console.log(`Device ${deviceId} found in list for tenant ${mapping.tenantId}. Using config: ${mapping.configPath}`);
@@ -781,11 +781,11 @@ function transformMediaItem(item, globalDefaultDuration = 15) {
 
 // Enhanced media compilation - without duplicate filtering
 async function compileMediaFeed(deviceId, env) {
-  console.log('In compileMediaFeed. KV bindings:', typeof env.NODO_FEED_CONFIG);
+  console.log('In compileMediaFeed. KV bindings:', typeof env.TOPOLO_FEED_CONFIG);
   console.log(`Compiling media feed for deviceId: ${deviceId}`);
 
-  const tenantMapping = await fetchFromKV(env.NODO_FEED_CONFIG, TENANT_MAPPING_KEY, "json");
-  const baseFeedConfigData = await fetchFromKV(env.NODO_FEED_CONFIG, BASE_FEED_CONFIG_KEY, "json");
+  const tenantMapping = await fetchFromKV(env.TOPOLO_FEED_CONFIG, TENANT_MAPPING_KEY, "json");
+  const baseFeedConfigData = await fetchFromKV(env.TOPOLO_FEED_CONFIG, BASE_FEED_CONFIG_KEY, "json");
 
   const baseConfig = baseFeedConfigData.baseConfig || { defaultDuration: 15 };
 
@@ -794,9 +794,9 @@ async function compileMediaFeed(deviceId, env) {
 
   if (tenantConfigKey) {
     try {
-      tenantConfigData = await fetchFromKV(env.NODO_FEED_CONFIG, tenantConfigKey, "json");
+      tenantConfigData = await fetchFromKV(env.TOPOLO_FEED_CONFIG, tenantConfigKey, "json");
     } catch (e) {
-      console.warn(`Failed to fetch tenant config from NODO_FEED_CONFIG for key ${tenantConfigKey}. Error: ${e.message}`);
+      console.warn(`Failed to fetch tenant config from TOPOLO_FEED_CONFIG for key ${tenantConfigKey}. Error: ${e.message}`);
     }
   } else {
       console.log(`No specific tenant config key found for device ${deviceId}. Checking for default in tenant mapping.`);
@@ -804,9 +804,9 @@ async function compileMediaFeed(deviceId, env) {
           const defaultTenantKey = tenantMapping.default.configPath;
           console.log(`Using default tenant config key from mapping: ${defaultTenantKey}`);
           try {
-              tenantConfigData = await fetchFromKV(env.NODO_FEED_CONFIG, defaultTenantKey, "json");
+              tenantConfigData = await fetchFromKV(env.TOPOLO_FEED_CONFIG, defaultTenantKey, "json");
           } catch (e) {
-              console.warn(`Failed to fetch default tenant config from NODO_FEED_CONFIG for key ${defaultTenantKey}. Error: ${e.message}`);
+              console.warn(`Failed to fetch default tenant config from TOPOLO_FEED_CONFIG for key ${defaultTenantKey}. Error: ${e.message}`);
           }
       } else {
           console.warn(`No tenant config key found for device ${deviceId} and no default mapping config key defined.`);
@@ -859,7 +859,7 @@ async function compileMediaFeed(deviceId, env) {
       const tenantCategorySetting = tenantConfigData.contentCategorySettings[categoryId];
       if (tenantCategorySetting && tenantCategorySetting.enabled && categoryGlobalDef.contentPath) {
         try {
-          const categoryContent = await fetchFromKV(env.NODO_FEED_CONFIG, categoryGlobalDef.contentPath, "json");
+          const categoryContent = await fetchFromKV(env.TOPOLO_FEED_CONFIG, categoryGlobalDef.contentPath, "json");
           if (categoryContent.media && Array.isArray(categoryContent.media)) {
             categoryContent.media.forEach(item => {
               if (shouldIncludeCategoryItem(item, tenantCategorySetting, categoryContent.adGroups)) {

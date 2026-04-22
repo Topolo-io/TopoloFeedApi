@@ -1,12 +1,16 @@
 {
-  "name": "nodo-feed-api",
+  "name": "topolo-feed-api",
   "version": "2.0.0",
-  "description": "Nodo Feed API - Media feed service for digital signage",
+  "description": "Topolo Feed API - Media feed service for digital signage",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "tail": "wrangler tail"
+    "deploy:dry-run": "wrangler deploy --dry-run --config wrangler.toml",
+    "tail": "wrangler tail",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit"
   },
   "dependencies": {
     "hono": "^4.6.0",
