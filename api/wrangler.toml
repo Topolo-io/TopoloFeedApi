@@ -10,3 +10,19 @@ id = "6a325c245ac0433696b3a127a8da3ee8"
 [[kv_namespaces]]
 binding = "TOPOLO_STATE"
 id = "37a037b342994ab5b722b12746d7cbd7"
+
+# Staging — reuses the staging KV namespaces created for TopoloFeed
+# so the two repos that deploy the topolo-feed-api worker stay in sync.
+[env.staging]
+name = "topolo-feed-api-staging"
+account_id = "4f4e1c69a3830946f9fea7b1eb7531ac"
+workers_dev = true
+routes = []
+
+[[env.staging.kv_namespaces]]
+binding = "TOPOLO_FEED_CONFIG"
+id = "28f0940f892540818910e2060e16d130"
+
+[[env.staging.kv_namespaces]]
+binding = "TOPOLO_STATE"
+id = "48705cd4b6fb47a09bf69e113d67e5fe"

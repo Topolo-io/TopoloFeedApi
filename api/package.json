@@ -10,7 +10,8 @@
     "tail": "wrangler tail",
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "build": "tsc --noEmit"
+    "build": "tsc --noEmit",
+    "deploy:staging": "env -u CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID=4f4e1c69a3830946f9fea7b1eb7531ac wrangler deploy --env staging"
   },
   "dependencies": {
     "hono": "^4.6.0",
