@@ -1,0 +1,33 @@
+name: Deploy Contract
+
+# Fails any push or PR that breaks the platform-wide deploy contract:
+#   - bare `deploy` script must be a guard (or a forwarder to a guard)
+#   - `deploy:staging` must inline-pin CLOUDFLARE_ACCOUNT_ID to the staging account
+#   - `deploy:production` must inline-pin CLOUDFLARE_ACCOUNT_ID to the production account
+#
+# The lint script vendors into every repo at scripts/lint-deploy-contract.mjs.
+# It has no runtime dependencies — pure Node stdlib.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**/package.json'
+      - 'scripts/lint-deploy-contract.mjs'
+      - '.github/workflows/deploy-contract.yml'
+  pull_request:
+    paths:
+      - '**/package.json'
+      - 'scripts/lint-deploy-contract.mjs'
+      - '.github/workflows/deploy-contract.yml'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Lint deploy contract
+        run: node scripts/lint-deploy-contract.mjs
